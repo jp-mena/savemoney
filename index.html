@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0A0C">
+  <title>SaveMoney</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0A0C;
+      --card: #141418;
+      --card-2: #1C1C22;
+      --line: #26262E;
+      --text: #FFFFFF;
+      --muted: #8B8B97;
+      --accent: #7B61FF;
+      --up: #3DDC97;
+      --down: #FF5C7A;
+      --warn: #FFB547;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; }
+    body { min-height: 100vh; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+    .app { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+    button { font-family: inherit; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .hello { font-size: 15px; color: var(--muted); }
+    .hello b { display: block; color: var(--text); font-size: 20px; font-weight: 700; margin-top: 2px; }
+    .icon-btn { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--card);
+      color: var(--text); display: grid; place-items: center; cursor: pointer; }
+    .icon-btn svg { width: 20px; height: 20px; }
+    .icon-btn:disabled { opacity: .3; cursor: default; }
+    .spin svg { animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .month-nav .icon-btn { width: 36px; height: 36px; }
+    .month-nav .icon-btn svg { width: 18px; height: 18px; }
+    .month-name { font-size: 16px; font-weight: 700; text-transform: capitalize; }
+
+    .label { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .balance { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
+    .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; padding: 5px 10px;
+      border-radius: 999px; background: rgba(61, 220, 151, 0.12); color: var(--up); }
+    .pill.neg { background: rgba(255, 92, 122, 0.12); color: var(--down); }
+
+    .chart { margin: 22px -16px 22px; height: 160px; position: relative; }
+    .chart svg { width: 100%; height: 100%; display: block; }
+    .empty-chart { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .card { background: var(--card); border-radius: var(--radius); padding: 16px; }
+    .stat .dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 14px; }
+    .stat .dot svg { width: 16px; height: 16px; }
+    .stat.in .dot { background: rgba(61, 220, 151, 0.14); color: var(--up); }
+    .stat.out .dot { background: rgba(255, 92, 122, 0.14); color: var(--down); }
+    .stat .v { font-size: 19px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+    .tc { margin-bottom: 28px; }
+    .tc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .tc-title { font-size: 15px; font-weight: 700; }
+    .badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    .badge.ok { background: rgba(61, 220, 151, 0.14); color: var(--up); }
+    .badge.warn { background: rgba(255, 181, 71, 0.14); color: var(--warn); }
+    .bar { height: 8px; border-radius: 99px; background: var(--card-2); overflow: hidden; margin: 4px 0 12px; }
+    .bar > div { height: 100%; border-radius: 99px; background: var(--up); transition: width .4s; }
+    .bar.warn > div { background: var(--warn); }
+    .tc-rows { display: grid; grid-template-columns: 1fr auto; row-gap: 6px; font-size: 14px; }
+    .tc-rows span:nth-child(odd) { color: var(--muted); }
+    .tc-rows span:nth-child(even) { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .tc-rows .total { color: var(--text) !important; font-weight: 700; padding-top: 6px; border-top: 1px solid var(--line); }
+
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: baseline; }
+    h2 span { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .group { background: var(--card); border-radius: var(--radius); padding: 4px 16px; margin-bottom: 12px; }
+    .group-title { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .6px; margin: 18px 4px 8px; }
+    .row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--card-2); display: grid; place-items: center;
+      font-size: 14px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+    .avatar svg { width: 18px; height: 18px; }
+    .row .info { flex: 1; min-width: 0; }
+    .row .name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row .sub { font-size: 13px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row .amt { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .amt.in { color: var(--up); }
+    .row.neutral .name, .row.neutral .amt { color: var(--muted); }
+    .row.neutral .avatar { color: var(--muted); }
+
+    .foot { text-align: center; font-size: 12px; color: var(--muted); margin-top: 24px; line-height: 1.6; }
+    .foot a { color: var(--muted); }
+
+    .setup { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: none; padding: 48px 20px; }
+    .setup.show { display: block; }
+    .setup-box { max-width: 420px; margin: 0 auto; }
+    .setup h1 { font-size: 28px; font-weight: 800; letter-spacing: -.8px; margin-bottom: 8px; }
+    .setup p { color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 28px; }
+    .setup label { display: block; font-size: 13px; color: var(--muted); font-weight: 500; margin: 0 0 6px 4px; }
+    .setup input { width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: var(--text);
+      font: inherit; font-size: 15px; padding: 14px 16px; margin-bottom: 18px; outline: none; }
+    .setup input:focus { border-color: var(--accent); }
+    .btn { width: 100%; border: 0; border-radius: 999px; background: var(--text); color: var(--bg); font-size: 16px; font-weight: 700; padding: 16px; cursor: pointer; }
+    .btn:disabled { opacity: .5; }
+    .err { color: var(--down); font-size: 13px; margin-top: 14px; min-height: 18px; }
+    .empty { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0; }
+    .skeleton { background: linear-gradient(90deg, var(--card) 0%, var(--card-2) 50%, var(--card) 100%); background-size: 200% 100%;
+      animation: sh 1.2s infinite; border-radius: 12px; }
+    @keyframes sh { to { background-position: -200% 0; } }
+  </style>
+</head>
+<body>
+  <div class="setup" id="setup">
+    <div class="setup-box">
+      <h1>SaveMoney</h1>
+      <p>Conecta la app con tu Apps Script. Ejecuta <b>verClave</b> en el editor para ver la URL y tu clave. Solo se pide una vez.</p>
+      <label for="cfg-url">URL de la API (termina en /exec)</label>
+      <input id="cfg-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+      <label for="cfg-key">Tu clave</label>
+      <input id="cfg-key" type="password" placeholder="Clave de la app" autocomplete="off">
+      <button class="btn" id="cfg-save">Conectar</button>
+      <div class="err" id="cfg-err"></div>
+    </div>
+  </div>
+
+  <div class="app">
+    <header>
+      <div class="hello">Hola,<b>Juan Pablo</b></div>
+      <button class="icon-btn" id="refresh" aria-label="Actualizar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+    </header>
+
+    <div class="month-nav">
+      <button class="icon-btn" id="prev" aria-label="Mes anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="month-name" id="month-name"></div>
+      <button class="icon-btn" id="next" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
+    </div>
+
+    <div class="label">Flujo neto del mes</div>
+    <div class="balance" id="balance"><span class="skeleton" style="display:inline-block;width:220px;height:44px"></span></div>
+    <span class="pill" id="pill" style="visibility:hidden"></span>
+
+    <div class="chart" id="chart"></div>
+
+    <div class="stats">
+      <div class="card stat in">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg></div>
+        <div class="label">Ingresos</div><div class="v" id="ingresos">–</div>
+      </div>
+      <div class="card stat out">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7-7 7 7"/></svg></div>
+        <div class="label">Gastos</div><div class="v" id="gastos">–</div>
+      </div>
+    </div>
+
+    <div class="card tc" id="tc"></div>
+
+    <h2>Movimientos <span id="count"></span></h2>
+    <div id="list"></div>
+    <div class="foot" id="foot"></div>
+  </div>
+
+  <script>
+    var DATA = { movimientos: [] };
+    var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    var MEDIO = { credito: 'Crédito', debito: 'Débito', cuenta: '' };
+    var now = new Date();
+    var CUR = { y: now.getFullYear(), m: now.getMonth() }; // mes calendario seleccionado
+    // Demo con datos de ejemplo: abriendo el archivo local o con ?demo
+    var DEMO = location.protocol === 'file:' || /[?&]demo\b/.test(location.search);
+
+    function store(k, v) {
+      try {
+        if (v === undefined) return JSON.parse(localStorage.getItem(k));
+        if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v));
+      } catch (e) { return null; }
+    }
+    var CFG = store('sm_cfg'); // { url, key }
+
+    function clp(n) { return '$' + Math.round(Math.abs(n)).toLocaleString('es-CL'); }
+    function el(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function monthKey(y, m) { return y + '-' + pad(m + 1); }
+    function parseDay(s) { var p = String(s).slice(0, 10).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+    function isCurrentMonth() { return CUR.y === now.getFullYear() && CUR.m === now.getMonth(); }
+
+    function render() {
+      var key = monthKey(CUR.y, CUR.m);
+      var movs = DATA.movimientos.filter(function (m) { return String(m.fecha).slice(0, 7) === key; });
+      var ing = 0, gas = 0, tcCompras = 0, tcPagos = 0;
+      movs.forEach(function (m) {
+        if (m.tipo === 'ingreso') ing += m.monto;
+        else if (m.tipo === 'egreso') { gas += m.monto; if (m.medio === 'credito') tcCompras += m.monto; }
+        else if (m.tipo === 'pago_tarjeta') tcPagos += m.monto;
+      });
+      var net = ing - gas;
+
+      el('month-name').textContent = MESES[CUR.m] + ' ' + CUR.y;
+      el('next').disabled = isCurrentMonth();
+      el('balance').textContent = (net < 0 ? '-' : '') + clp(net);
+      var pill = el('pill');
+      pill.style.visibility = movs.length ? 'visible' : 'hidden';
+      pill.className = 'pill' + (net < 0 ? ' neg' : '');
+      pill.textContent = (net >= 0 ? '▲ ' : '▼ ') + (ing ? 'Ahorro ' + Math.round((net / ing) * 100) + '%' : 'Sin ingresos');
+      el('ingresos').textContent = clp(ing);
+      el('gastos').textContent = clp(gas);
+      el('count').textContent = movs.length ? movs.length + ' este mes' : '';
+
+      renderTarjeta(tcCompras, tcPagos);
+      renderChart(movs, net < 0);
+      renderList(movs);
+
+      var foot = [];
+      if (DATA.lastSync) foot.push('Última sincronización ' + new Date(DATA.lastSync).toLocaleString('es-CL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }));
+      if (DATA.pendientes) foot.push(DATA.pendientes + ' sin clasificar (ver hoja "SinClasificar")');
+      if (DEMO) foot.push('Vista previa con datos de ejemplo');
+      el('foot').innerHTML = foot.map(esc).join('<br>') + (DEMO ? '' : '<br><a href="#" id="logout">Cambiar conexión</a>');
+    }
+
+    // Cuadre de la tarjeta de crédito: lo comprado en el mes vs lo pagado en el mes
+    function renderTarjeta(compras, pagos) {
+      var box = el('tc');
+      if (!compras && !pagos) { box.style.display = 'none'; return; }
+      box.style.display = '';
+      var diff = compras - pagos;
+      var ok = Math.abs(diff) < 1;
+      var pct = compras ? Math.min(100, Math.round((pagos / compras) * 100)) : 100;
+      var badge, totalLabel;
+      if (ok) { badge = '<span class="badge ok">✓ Cuadra</span>'; totalLabel = 'Diferencia'; }
+      else if (diff > 0) { badge = '<span class="badge warn">Falta pagar</span>'; totalLabel = 'Por pagar'; }
+      else { badge = '<span class="badge warn">Pagado de más</span>'; totalLabel = 'Pagado de más'; }
+      box.innerHTML =
+        '<div class="tc-head"><div class="tc-title">Tarjeta de crédito</div>' + badge + '</div>' +
+        '<div class="bar' + (ok ? '' : ' warn') + '"><div style="width:' + pct + '%"></div></div>' +
+        '<div class="tc-rows">' +
+        '<span>Compras con crédito</span><span>' + clp(compras) + '</span>' +
+        '<span>Pagos a la tarjeta</span><span>' + clp(pagos) + '</span>' +
+        '<span class="total">' + totalLabel + '</span><span class="total">' + clp(diff) + '</span>' +
+        '</div>';
+    }
+
+    function renderChart(movs, negative) {
+      var box = el('chart');
+      var flujo = movs.filter(function (m) { return m.tipo !== 'pago_tarjeta'; });
+      if (!flujo.length) { box.innerHTML = '<div class="empty-chart">Sin movimientos este mes</div>'; return; }
+      var byDay = {};
+      flujo.forEach(function (m) { var d = parseDay(m.fecha).getDate(); byDay[d] = (byDay[d] || 0) + (m.tipo === 'ingreso' ? m.monto : -m.monto); });
+      var daysInMonth = new Date(CUR.y, CUR.m + 1, 0).getDate();
+      var lastDay = isCurrentMonth() ? now.getDate() : daysInMonth;
+      var pts = [0], acc = 0;
+      for (var d = 1; d <= lastDay; d++) { acc += byDay[d] || 0; pts.push(acc); }
+      var W = 400, H = 160, padY = 14;
+      var min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+      if (max === min) max = min + 1;
+      // eje X = mes completo, así se ve cuánto del mes queda
+      var x = function (i) { return (i / daysInMonth) * (W - 8); };
+      var y = function (v) { return padY + (1 - (v - min) / (max - min)) * (H - padY * 2); };
+      var line = pts.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1); }).join(' ');
+      var color = negative ? 'var(--down)' : 'var(--up)';
+      var lx = x(pts.length - 1), ly = y(pts[pts.length - 1]);
+      box.innerHTML =
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+        '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + color + '" stop-opacity=".28"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
+        '<line x1="0" x2="' + W + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--line)" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/>' +
+        '<path d="' + line + ' L' + lx + ',' + H + ' L0,' + H + ' Z" fill="url(#g)"/>' +
+        '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+        '<circle cx="' + lx + '" cy="' + ly + '" r="4" fill="' + color + '"/>' +
+        '</svg>';
+    }
+
+    function dayTitle(s) {
+      var d = parseDay(s), t = new Date(); t.setHours(0, 0, 0, 0);
+      var diff = Math.round((t - d) / 86400000);
+      if (diff === 0) return 'Hoy';
+      if (diff === 1) return 'Ayer';
+      return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3);
+    }
+    function initials(s) {
+      var w = String(s || '?').replace(/[^\wÀ-ÿ ]/g, '').trim().split(/\s+/);
+      return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
+    }
+    var ICON_TC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
+
+    function renderList(movs) {
+      if (!movs.length) { el('list').innerHTML = '<div class="empty">Aún no hay movimientos este mes</div>'; return; }
+      var groups = [], cur = null;
+      movs.forEach(function (m) {
+        var k = String(m.fecha).slice(0, 10);
+        if (!cur || cur.k !== k) { cur = { k: k, items: [] }; groups.push(cur); }
+        cur.items.push(m);
+      });
+      el('list').innerHTML = groups.map(function (g) {
+        return '<div class="group-title">' + dayTitle(g.k) + '</div><div class="group">' + g.items.map(function (m) {
+          var inc = m.tipo === 'ingreso', pago = m.tipo === 'pago_tarjeta';
+          var sub = pago ? 'No cuenta como gasto' : [m.categoria, MEDIO[m.medio], m.descripcion !== 'Tarjeta de crédito' && m.descripcion !== 'Tarjeta de débito' ? m.descripcion : '']
+            .filter(Boolean).join(' · ');
+          var avatar = pago ? ICON_TC : esc(initials(m.contraparte || m.categoria));
+          var sign = inc ? '+' : (pago ? '' : '-');
+          return '<div class="row' + (pago ? ' neutral' : '') + '"><div class="avatar">' + avatar + '</div>' +
+            '<div class="info"><div class="name">' + esc(m.contraparte || m.asunto || 'Movimiento') + '</div>' +
+            '<div class="sub">' + esc(sub) + '</div></div>' +
+            '<div class="amt' + (inc ? ' in' : '') + '">' + sign + clp(m.monto) + '</div></div>';
+        }).join('') + '</div>';
+      }).join('');
+    }
+
+    function api(cfg, action) {
+      return fetch(cfg.url + '?action=' + action + '&k=' + encodeURIComponent(cfg.key))
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j.ok) throw new Error(j.error === 'no autorizado' ? 'Clave incorrecta' : j.error);
+          return j.data;
+        });
+    }
+
+    function load(sync) {
+      var btn = el('refresh');
+      btn.classList.add('spin');
+      if (DEMO) { setTimeout(function () { btn.classList.remove('spin'); DATA = mockData(); render(); }, 300); return; }
+      api(CFG, sync ? 'sync' : 'data').then(function (d) {
+        DATA = d; store('sm_data', d);
+        btn.classList.remove('spin'); render();
+      }).catch(function (e) {
+        btn.classList.remove('spin');
+        el('foot').textContent = 'Sin conexión: ' + (e && e.message || e) + (DATA.movimientos.length ? ' (mostrando datos guardados)' : '');
+        if (/Clave/.test(e.message)) showSetup(e.message);
+      });
+    }
+
+    function showSetup(msg) {
+      el('setup').classList.add('show');
+      el('cfg-url').value = (CFG && CFG.url) || '';
+      el('cfg-err').textContent = msg || '';
+    }
+
+    el('cfg-save').addEventListener('click', function () {
+      var cfg = { url: el('cfg-url').value.trim(), key: el('cfg-key').value.trim() };
+      if (!/^https:\/\/script\.google(usercontent)?\.com\/.+\/exec$/.test(cfg.url)) { el('cfg-err').textContent = 'La URL debe terminar en /exec'; return; }
+      if (!cfg.key) { el('cfg-err').textContent = 'Falta la clave'; return; }
+      var b = el('cfg-save'); b.disabled = true; b.textContent = 'Conectando…'; el('cfg-err').textContent = '';
+      api(cfg, 'data').then(function (d) {
+        CFG = cfg; store('sm_cfg', cfg); DATA = d; store('sm_data', d);
+        el('setup').classList.remove('show'); render();
+      }).catch(function (e) {
+        el('cfg-err').textContent = 'No se pudo conectar: ' + e.message;
+      }).then(function () { b.disabled = false; b.textContent = 'Conectar'; });
+    });
+
+    document.addEventListener('click', function (e) {
+      if (e.target.id !== 'logout') return;
+      e.preventDefault();
+      store('sm_cfg', null); store('sm_data', null); CFG = null;
+      showSetup();
+    });
+
+    // Datos de ejemplo para ver el diseño fuera de Apps Script
+    function mockData() {
+      var f = function (back) { var d = new Date(now); d.setDate(d.getDate() - back); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+      return {
+        lastSync: new Date().toISOString(), pendientes: 0,
+        movimientos: [
+          { fecha: f(0), tipo: 'egreso', monto: 12990, contraparte: 'Jumbo', categoria: 'Compra', medio: 'credito', descripcion: 'Google Wallet' },
+          { fecha: f(1), tipo: 'pago_tarjeta', monto: 54100, contraparte: 'Pago tarjeta de crédito', categoria: 'Pago tarjeta', medio: 'credito' },
+          { fecha: f(2), tipo: 'egreso', monto: 45200, contraparte: 'Uber Eats', categoria: 'Compra', medio: 'credito', descripcion: 'Google Wallet' },
+          { fecha: f(3), tipo: 'egreso', monto: 250000, contraparte: 'Arriendo', categoria: 'Transferencia', medio: 'cuenta', descripcion: 'Octubre' },
+          { fecha: f(9), tipo: 'egreso', monto: 8900, contraparte: 'Spotify', categoria: 'Compra', medio: 'credito', descripcion: 'Google Wallet' },
+          { fecha: f(now.getDate() - 1), tipo: 'ingreso', monto: 1500000, contraparte: 'Empresa SpA', categoria: 'Ingreso fijo', medio: 'cuenta', descripcion: 'Sueldo' },
+          { fecha: f(now.getDate() + 29), tipo: 'ingreso', monto: 1500000, contraparte: 'Empresa SpA', categoria: 'Ingreso fijo', medio: 'cuenta', descripcion: 'Sueldo' }
+        ]
+      };
+    }
+
+    el('prev').addEventListener('click', function () { CUR.m--; if (CUR.m < 0) { CUR.m = 11; CUR.y--; } render(); });
+    el('next').addEventListener('click', function () { if (isCurrentMonth()) return; CUR.m++; if (CUR.m > 11) { CUR.m = 0; CUR.y++; } render(); });
+    el('refresh').addEventListener('click', function () { load(true); });
+
+    if (!DEMO && !CFG) {
+      showSetup();
+    } else {
+      var cached = !DEMO && store('sm_data');
+      if (cached) { DATA = cached; render(); } // abre al instante con lo último guardado
+      load(false);
+    }
+
+    if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js');
+  </script>
+</body>
+</html>
